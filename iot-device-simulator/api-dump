@@ -1,0 +1,456 @@
+Description: (SO0041) - The AWS cloud formation template for the deployment of iot-device-simulator. Version v3.0.0.
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Console access
+        Parameters:
+          - UserEmail
+    ParameterLabels:
+      UserEmail:
+        default: "* Console Administrator Email"
+Parameters:
+  UserEmail:
+    Type: String
+    AllowedPattern: ^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$
+    ConstraintDescription: User E-Mail must be a valid E-Mail address.
+    Description: The user E-Mail to access the UI
+Mappings:
+  Solution:
+    Config:
+      SolutionId: SO0041
+      Version: v3.0.0
+      SendAnonymousUsage: "Yes"
+      S3Bucket: solutions
+      KeyPrefix: iot-device-simulator/v3.0.0
+Resources:
+APILogsB6A8DF10:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 90
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: CloudWatch Logs are already encrypted by default.
+  APIIoTDeviceSimulatorApi789EED4C:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: IoT Device Simulator Rest API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: IoTDeviceSimulatorApi
+      Tags:
+        - Key: SolutionId
+          Value:
+            Fn::FindInMap:
+              - Solution
+              - Config
+              - SolutionId
+  APIIoTDeviceSimulatorApiCloudWatchRole28B7B1FA:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Tags:
+        - Key: SolutionId
+          Value:
+            Fn::FindInMap:
+              - Solution
+              - Config
+              - SolutionId
+  APIIoTDeviceSimulatorApiAccount46D2BA16:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn:
+        Fn::GetAtt:
+          - APIIoTDeviceSimulatorApiCloudWatchRole28B7B1FA
+          - Arn
+    DependsOn:
+      - APIIoTDeviceSimulatorApi789EED4C
+  APIIoTDeviceSimulatorApiDeployment3C1BA3951db056031fdce112fa315a0dc108e90c:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      Description: Automatically created by the RestApi construct
+    DependsOn:
+      - APIApiRequestValidatorC6EB6FA1
+      - APIIoTDeviceSimulatorApidevicetypestypeidANY9009DE71
+      - APIIoTDeviceSimulatorApidevicetypestypeidOPTIONS2E1262D2
+      - APIIoTDeviceSimulatorApidevicetypestypeid9C625350
+      - APIIoTDeviceSimulatorApidevicetypesANY814B7130
+      - APIIoTDeviceSimulatorApidevicetypesOPTIONS9AA68147
+      - APIIoTDeviceSimulatorApidevicetypes69DA3CE2
+      - APIIoTDeviceSimulatorApiOPTIONS4EA20DA2
+      - APIIoTDeviceSimulatorApisimulationsimidANY7341FEEB
+      - APIIoTDeviceSimulatorApisimulationsimidOPTIONS3A8ADE0C
+      - APIIoTDeviceSimulatorApisimulationsimidC20C5A22
+      - APIIoTDeviceSimulatorApisimulationANY7B648289
+      - APIIoTDeviceSimulatorApisimulationOPTIONS3B6D882D
+      - APIIoTDeviceSimulatorApisimulationAB87A18B
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W68
+            reason: The solution does not require the usage plan.
+  APIIoTDeviceSimulatorApiDeploymentStageprodEBDF0099:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AccessLogSetting:
+        DestinationArn:
+          Fn::GetAtt:
+            - APILogsB6A8DF10
+            - Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","user":"$context.identity.user","caller":"$context.identity.caller","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength"}'
+      DeploymentId:
+        Ref: APIIoTDeviceSimulatorApiDeployment3C1BA3951db056031fdce112fa315a0dc108e90c
+      MethodSettings:
+        - HttpMethod: "*"
+          LoggingLevel: INFO
+          ResourcePath: /*
+      StageName: prod
+      Tags:
+        - Key: SolutionId
+          Value:
+            Fn::FindInMap:
+              - Solution
+              - Config
+              - SolutionId
+      TracingEnabled: true
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W64
+            reason: The solution does not require the usage plan.
+  APIIoTDeviceSimulatorApiOPTIONS4EA20DA2:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: OPTIONS
+      ResourceId:
+        Fn::GetAtt:
+          - APIIoTDeviceSimulatorApi789EED4C
+          - RootResourceId
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: NONE
+      Integration:
+        IntegrationResponses:
+          - ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+            StatusCode: "200"
+        RequestTemplates:
+          application/json: "{ statusCode: 200 }"
+        Type: MOCK
+      MethodResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+          StatusCode: "200"
+  APIIoTDeviceSimulatorApisimulationAB87A18B:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - APIIoTDeviceSimulatorApi789EED4C
+          - RootResourceId
+      PathPart: simulation
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+  APIIoTDeviceSimulatorApisimulationOPTIONS3B6D882D:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApisimulationAB87A18B
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: NONE
+      Integration:
+        IntegrationResponses:
+          - ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+            StatusCode: "200"
+        RequestTemplates:
+          application/json: "{ statusCode: 200 }"
+        Type: MOCK
+      MethodResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+          StatusCode: "200"
+  APIIoTDeviceSimulatorApisimulationANY7B648289:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApisimulationAB87A18B
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: AWS_IAM
+      Integration:
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: "200"
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - simulatormicroservices752C24A5
+                  - Arn
+              - /invocations
+      MethodResponses:
+        - ResponseModels:
+            application/json: Empty
+          StatusCode: "200"
+      RequestParameters:
+        method.request.querystring.nextToken: false
+      RequestValidatorId:
+        Ref: APIApiRequestValidatorC6EB6FA1
+  APIIoTDeviceSimulatorApisimulationsimidC20C5A22:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Ref: APIIoTDeviceSimulatorApisimulationAB87A18B
+      PathPart: "{simid}"
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+  APIIoTDeviceSimulatorApisimulationsimidOPTIONS3A8ADE0C:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApisimulationsimidC20C5A22
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: NONE
+      Integration:
+        IntegrationResponses:
+          - ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+            StatusCode: "200"
+        RequestTemplates:
+          application/json: "{ statusCode: 200 }"
+        Type: MOCK
+      MethodResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+          StatusCode: "200"
+  APIIoTDeviceSimulatorApisimulationsimidANY7341FEEB:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApisimulationsimidC20C5A22
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: AWS_IAM
+      Integration:
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: "200"
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - simulatormicroservices752C24A5
+                  - Arn
+              - /invocations
+      MethodResponses:
+        - ResponseModels:
+            application/json: Empty
+          StatusCode: "200"
+      RequestParameters:
+        method.request.querystring.nextToken: false
+      RequestValidatorId:
+        Ref: APIApiRequestValidatorC6EB6FA1
+  APIIoTDeviceSimulatorApidevicetypes69DA3CE2:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - APIIoTDeviceSimulatorApi789EED4C
+          - RootResourceId
+      PathPart: devicetypes
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+  APIIoTDeviceSimulatorApidevicetypesOPTIONS9AA68147:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApidevicetypes69DA3CE2
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: NONE
+      Integration:
+        IntegrationResponses:
+          - ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+            StatusCode: "200"
+        RequestTemplates:
+          application/json: "{ statusCode: 200 }"
+        Type: MOCK
+      MethodResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+          StatusCode: "200"
+  APIIoTDeviceSimulatorApidevicetypesANY814B7130:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApidevicetypes69DA3CE2
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: AWS_IAM
+      Integration:
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: "200"
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - simulatormicroservices752C24A5
+                  - Arn
+              - /invocations
+      MethodResponses:
+        - ResponseModels:
+            application/json: Empty
+          StatusCode: "200"
+      RequestParameters:
+        method.request.querystring.nextToken: false
+      RequestValidatorId:
+        Ref: APIApiRequestValidatorC6EB6FA1
+  APIIoTDeviceSimulatorApidevicetypestypeid9C625350:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Ref: APIIoTDeviceSimulatorApidevicetypes69DA3CE2
+      PathPart: "{typeid}"
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+  APIIoTDeviceSimulatorApidevicetypestypeidOPTIONS2E1262D2:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: OPTIONS
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApidevicetypestypeid9C625350
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: NONE
+      Integration:
+        IntegrationResponses:
+          - ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+            StatusCode: "200"
+        RequestTemplates:
+          application/json: "{ statusCode: 200 }"
+        Type: MOCK
+      MethodResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+          StatusCode: "200"
+  APIIoTDeviceSimulatorApidevicetypestypeidANY9009DE71:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Ref: APIIoTDeviceSimulatorApidevicetypestypeid9C625350
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      AuthorizationType: AWS_IAM
+      Integration:
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: "200"
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - simulatormicroservices752C24A5
+                  - Arn
+              - /invocations
+      MethodResponses:
+        - ResponseModels:
+            application/json: Empty
+          StatusCode: "200"
+      RequestParameters:
+        method.request.querystring.nextToken: false
+      RequestValidatorId:
+        Ref: APIApiRequestValidatorC6EB6FA1
+  APIApiRequestValidatorC6EB6FA1:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId:
+        Ref: APIIoTDeviceSimulatorApi789EED4C
+      ValidateRequestBody: true
+      ValidateRequestParameters: true
