@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import java.lang.Math;
 
 import static org.mockito.Mockito.when;
 
@@ -124,19 +125,14 @@ class TestDataGenerator {
         final long interval = duration / desiredEvents;
 
         switch ( scenario ) {
-            case STALE -> {
+            case STALE:
                 return generate( start, start - duration, interval, baseTemperature );
-            }
-            case RISING -> {
+            case RISING:
                 return generate( start, start - duration, interval, baseTemperature, baseTemperature + 10 );
-
-            }
-            case DROPPING -> {
+            case DROPPING:
                 return generate( start, start - duration, interval, baseTemperature - 10, baseTemperature );
-            }
-            default -> {
+            default:
                 throw new RuntimeException( "Scenario unknown" );
-            }
         }
     }
 
@@ -159,8 +155,7 @@ class TestDataGenerator {
     }
 
     private static float getRandomFloat( float lowerBound, float upperBound ) {
-        return ThreadLocalRandom.current()
-                .nextFloat( lowerBound, upperBound );
+        return lowerBound + (float)Math.random() * (upperBound - lowerBound);
     }
 
 }
